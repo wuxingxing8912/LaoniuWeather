@@ -163,7 +163,6 @@ export default function App() {
         <div className="animate-glow absolute -top-24 -left-24 size-72 rounded-full bg-sky-500/25 blur-3xl" />
         <div className="animate-glow absolute top-1/3 -right-20 size-80 rounded-full bg-indigo-500/20 blur-3xl [animation-delay:4s]" />
       </div>
-
       <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:py-16">
         <header className="animate-fade-up">
           <p className="text-xs tracking-[0.3em] text-sky-300/80 uppercase">Laoniu Weather</p>
