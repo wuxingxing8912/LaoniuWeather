@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import CurrentWeather from './components/CurrentWeather'
 import FavoriteList from './components/FavoriteList'
 import SearchBar from './components/SearchBar'
+import WeatherIcon from './components/WeatherIcon'
 import { fetchWeather } from './api/weather'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import type { City, WeatherResult } from './types/weather'
@@ -50,34 +51,38 @@ export default function App() {
   const activeCityId = weather?.city.id ?? selected?.id
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="animate-glow absolute -top-24 -left-24 size-72 rounded-full bg-sky-500/25 blur-3xl" />
+        <div className="animate-glow absolute top-1/3 -right-20 size-80 rounded-full bg-indigo-500/20 blur-3xl [animation-delay:4s]" />
+      </div>
+
       <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:py-16">
-        <header>
+        <header className="animate-fade-up">
           <p className="text-xs tracking-[0.3em] text-sky-300/80 uppercase">Laoniu Weather</p>
           <h1 className="mt-2 text-3xl font-semibold text-white">老牛天气</h1>
           <p className="mt-1 text-sm text-slate-400">搜索城市，查看实时天气，收藏常用城市</p>
         </header>
 
-        <div className="mt-8">
+        <div className="animate-fade-up mt-8 [animation-delay:0.06s]">
           <SearchBar onSelect={loadWeather} />
         </div>
 
         <main className="mt-8 grid gap-6 lg:grid-cols-[1fr_300px]">
           <div>
             {error && (
-              <div className="rounded-3xl border border-rose-400/30 bg-rose-500/10 p-6 text-sm text-rose-200">
+              <div className="animate-fade-in rounded-3xl border border-rose-400/30 bg-rose-500/10 p-6 text-sm text-rose-200">
                 {error}
               </div>
             )}
 
-            {!error && loading && !weather && (
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-sm text-slate-400">
-                正在获取天气数据…
-              </div>
-            )}
+            {!error && loading && !weather && <WeatherSkeleton />}
 
             {!error && weather && (
-              <div className={loading ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
+              <div
+                key={weather.city.id}
+                className={`transition-opacity duration-300 ${loading ? 'opacity-60' : 'opacity-100'}`}
+              >
                 <CurrentWeather
                   weather={weather}
                   isFavorite={favorites.some((city) => city.id === weather.city.id)}
@@ -87,8 +92,9 @@ export default function App() {
             )}
 
             {!error && !loading && !weather && (
-              <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-sm text-slate-400">
-                搜索并选择一个城市，开始查看天气
+              <div className="animate-fade-up flex flex-col items-center gap-4 rounded-3xl border border-dashed border-white/15 p-10 text-center">
+                <WeatherIcon kind="cloud" className="size-16 text-sky-300/70" />
+                <p className="text-sm text-slate-400">搜索并选择一个城市，开始查看天气</p>
               </div>
             )}
           </div>
@@ -101,9 +107,32 @@ export default function App() {
           />
         </main>
 
-        <footer className="mt-10 text-xs text-slate-500">
+        <footer className="animate-fade-in mt-10 text-xs text-slate-500 [animation-delay:0.5s]">
           数据来源：Open-Meteo · 收藏城市保存在本地浏览器
         </footer>
+      </div>
+    </div>
+  )
+}
+
+function WeatherSkeleton() {
+  return (
+    <div className="animate-fade-in rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="shimmer h-5 w-24 rounded" />
+          <div className="shimmer h-3 w-32 rounded" />
+        </div>
+        <div className="shimmer h-7 w-20 rounded-full" />
+      </div>
+      <div className="mt-8 flex items-center gap-5">
+        <div className="shimmer size-20 rounded-full" />
+        <div className="shimmer h-16 w-32 rounded-2xl" />
+      </div>
+      <div className="mt-8 grid grid-cols-3 gap-3">
+        <div className="shimmer h-16 rounded-2xl" />
+        <div className="shimmer h-16 rounded-2xl" />
+        <div className="shimmer h-16 rounded-2xl" />
       </div>
     </div>
   )

@@ -87,18 +87,31 @@ export default function SearchBar({ onSelect }: Props) {
           }}
           aria-label="搜索城市"
         />
-        {loading && <span className="text-xs text-slate-400">搜索中…</span>}
+        {loading && (
+          <svg
+            className="size-4 shrink-0 animate-spin text-sky-300"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.4}
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 3a9 9 0 1 0 9 9" />
+          </svg>
+        )}
       </form>
 
       {error && <p className="mt-2 px-2 text-sm text-rose-300">{error}</p>}
 
       {open && results.length > 0 && (
-        <ul className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-xl backdrop-blur">
-          {results.map((city) => (
+        <ul className="animate-fade-in absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-xl backdrop-blur">
+          {results.map((city, index) => (
             <li key={city.id}>
               <button
                 type="button"
-                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-white/10"
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition duration-200 hover:translate-x-1 hover:bg-white/10"
+                style={{ animationDelay: `${index * 30}ms` }}
                 onClick={() => pick(city)}
               >
                 <span className="text-sm text-slate-100">{city.name}</span>
