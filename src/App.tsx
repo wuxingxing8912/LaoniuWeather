@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import CurrentWeather from './components/CurrentWeather'
 import FavoriteList from './components/FavoriteList'
 import SearchBar from './components/SearchBar'
+import WeatherAlerts from './components/WeatherAlerts'
 import WeatherIcon from './components/WeatherIcon'
 import { fetchWeather } from './api/weather'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { buildAlerts } from './utils/alerts'
 import type { City, WeatherResult } from './types/weather'
 
 const FAVORITES_KEY = 'laoniu-weather:favorites'
@@ -49,6 +51,12 @@ export default function App() {
   }
 
   const activeCityId = weather?.city.id ?? selected?.id
+  const alerts = useMemo(() => (weather ? buildAlerts(weather) : []), [weather])
+
+  useEffect(() => {
+    const hasDanger = alerts.some((alert) => alert.level === 'danger')
+    document.title = hasDanger ? '恶劣天气预警 · 老牛天气' : '老牛天气'
+  }, [alerts])
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950">
@@ -81,8 +89,11 @@ export default function App() {
             {!error && weather && (
               <div
                 key={weather.city.id}
-                className={`transition-opacity duration-300 ${loading ? 'opacity-60' : 'opacity-100'}`}
+                className={`space-y-4 transition-opacity duration-300 ${
+                  loading ? 'opacity-60' : 'opacity-100'
+                }`}
               >
+                <WeatherAlerts alerts={alerts} />
                 <CurrentWeather
                   weather={weather}
                   isFavorite={favorites.some((city) => city.id === weather.city.id)}
