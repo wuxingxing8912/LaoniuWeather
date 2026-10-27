@@ -158,7 +158,7 @@ export default function App() {
   }, [compareCities])
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950">
+    <div className="relative min-h-screen bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="animate-glow absolute -top-24 -left-24 size-72 rounded-full bg-sky-500/25 blur-3xl" />
         <div className="animate-glow absolute top-1/3 -right-20 size-80 rounded-full bg-indigo-500/20 blur-3xl [animation-delay:4s]" />
@@ -171,7 +171,7 @@ export default function App() {
           <p className="mt-1 text-sm text-slate-400">搜索城市，查看实时天气，收藏常用城市</p>
         </header>
 
-        <div className="animate-fade-up mt-8 [animation-delay:0.06s]">
+        <div className="relative z-30 animate-fade-up mt-8 [animation-delay:0.06s]">
           <SearchBar onSelect={loadWeather} />
         </div>
 

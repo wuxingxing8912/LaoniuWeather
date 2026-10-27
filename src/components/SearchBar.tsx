@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { searchCities } from '../api/weather'
 import type { City } from '../types/weather'
 
@@ -12,6 +12,7 @@ export default function SearchBar({ onSelect }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const query = keyword.trim()
@@ -46,6 +47,21 @@ export default function SearchBar({ onSelect }: Props) {
     }
   }, [keyword])
 
+  useEffect(() => {
+    if (!open) return
+
+    function handlePointerDown(event: MouseEvent | TouchEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('touchstart', handlePointerDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('touchstart', handlePointerDown)
+    }
+  }, [open])
+
   function pick(city: City) {
     onSelect(city)
     setKeyword('')
@@ -54,7 +70,7 @@ export default function SearchBar({ onSelect }: Props) {
   }
 
   return (
-    <div className="relative w-full">
+    <div ref={containerRef} className="relative z-50 w-full">
       <form
         className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur focus-within:border-sky-400/60"
         onSubmit={(event) => {
@@ -105,7 +121,7 @@ export default function SearchBar({ onSelect }: Props) {
       {error && <p className="mt-2 px-2 text-sm text-rose-300">{error}</p>}
 
       {open && results.length > 0 && (
-        <ul className="animate-fade-in absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-xl backdrop-blur">
+        <ul className="animate-fade-in absolute top-full z-50 mt-2 w-full overflow-hidden rounded-2xl border border-white/15 bg-slate-900/95 shadow-2xl shadow-black/50 backdrop-blur">
           {results.map((city, index) => (
             <li key={city.id}>
               <button
