@@ -1,4 +1,5 @@
 import type {
+  AirQuality,
   City,
   CurrentWeather,
   DailyWeather,
@@ -8,6 +9,7 @@ import type {
 
 const GEOCODING_API = 'https://geocoding-api.open-meteo.com/v1/search'
 const FORECAST_API = 'https://api.open-meteo.com/v1/forecast'
+const AIR_QUALITY_API = 'https://air-quality-api.open-meteo.com/v1/air-quality'
 
 interface GeocodingResponse {
   results?: Array<{
@@ -127,6 +129,57 @@ export async function fetchWeather(city: City): Promise<WeatherResult> {
   }
 
   return { city, current, daily }
+}
+
+export async function fetchAirQuality(city: City): Promise<AirQuality> {
+  const params = new URLSearchParams({
+    latitude: String(city.latitude),
+    longitude: String(city.longitude),
+    current: [
+      'us_aqi',
+      'european_aqi',
+      'pm10',
+      'pm2_5',
+      'carbon_monoxide',
+      'nitrogen_dioxide',
+      'sulphur_dioxide',
+      'ozone',
+    ].join(','),
+    timezone: 'auto',
+  })
+  const res = await fetch(`${AIR_QUALITY_API}?${params}`)
+  if (!res.ok) throw new Error('空气质量数据获取失败，请稍后重试')
+
+  const data = (await res.json()) as {
+    current?: Partial<{
+      time: string
+      us_aqi: number
+      european_aqi: number
+      pm10: number
+      pm2_5: number
+      carbon_monoxide: number
+      nitrogen_dioxide: number
+      sulphur_dioxide: number
+      ozone: number
+    }>
+  }
+  const current = data.current ?? {}
+
+  if (current.us_aqi == null && current.pm2_5 == null) {
+    throw new Error('该地区暂无空气质量数据')
+  }
+
+  return {
+    usAqi: current.us_aqi ?? 0,
+    europeanAqi: current.european_aqi ?? 0,
+    pm25: current.pm2_5 ?? 0,
+    pm10: current.pm10 ?? 0,
+    no2: current.nitrogen_dioxide ?? 0,
+    o3: current.ozone ?? 0,
+    so2: current.sulphur_dioxide ?? 0,
+    co: (current.carbon_monoxide ?? 0) / 1000,
+    time: current.time ?? '',
+  }
 }
 
 export async function fetchHistory(city: City, days: number): Promise<HistoryDay[]> {

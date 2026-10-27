@@ -29,6 +29,18 @@ export interface DailyWeather {
   maxUvIndex: number
 }
 
+export interface AirQuality {
+  usAqi: number
+  europeanAqi: number
+  pm25: number
+  pm10: number
+  no2: number
+  o3: number
+  so2: number
+  co: number
+  time: string
+}
+
 export interface HistoryDay {
   date: string
   maxTemperature: number

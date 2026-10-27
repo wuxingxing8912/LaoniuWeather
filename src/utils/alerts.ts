@@ -1,4 +1,5 @@
-import type { AlertLevel, WeatherAlert, WeatherResult } from '../types/weather'
+import type { AirQuality, AlertLevel, WeatherAlert, WeatherResult } from '../types/weather'
+import { calcChinaAqi } from './aqi'
 
 const THUNDER_CODES = [95, 96, 99]
 const HEAVY_RAIN_CODES = [65, 67, 81, 82]
@@ -9,7 +10,7 @@ const FOG_CODES = [45, 48]
 
 const LEVEL_ORDER: Record<AlertLevel, number> = { danger: 0, warning: 1, info: 2 }
 
-export function buildAlerts(weather: WeatherResult): WeatherAlert[] {
+export function buildAlerts(weather: WeatherResult, air?: AirQuality | null): WeatherAlert[] {
   const { current, daily } = weather
   const alerts: WeatherAlert[] = []
 
@@ -133,6 +134,20 @@ export function buildAlerts(weather: WeatherResult): WeatherAlert[] {
   // 低能见度
   if (FOG_CODES.includes(current.weatherCode)) {
     add('warning', 'fog', '能见度低', '当前有雾，驾车请减速并开启雾灯，保持安全车距。', 'fog')
+  }
+
+  // 空气质量
+  if (air) {
+    const { aqi } = calcChinaAqi(air)
+    if (aqi > 300) {
+      add('danger', 'air-hazard', '严重污染', `AQI 达 ${aqi}，请留在室内并关闭门窗，避免户外暴露。`, 'fog')
+    } else if (aqi > 200) {
+      add('danger', 'air-severe', '重度污染', `AQI 达 ${aqi}，建议停止户外运动，外出佩戴口罩。`, 'fog')
+    } else if (aqi > 150) {
+      add('warning', 'air-unhealthy', '中度污染', `AQI ${aqi}，敏感人群应避免户外活动。`, 'fog')
+    } else if (aqi > 100) {
+      add('info', 'air-sensitive', '轻度污染', `AQI ${aqi}，易感人群请减少长时间户外锻炼。`, 'fog')
+    }
   }
 
   // 昼夜温差

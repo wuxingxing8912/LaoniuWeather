@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import AirQualityCard from './components/AirQualityCard'
 import CityCompare from './components/CityCompare'
 import CurrentWeather from './components/CurrentWeather'
 import FavoriteList from './components/FavoriteList'
@@ -6,10 +7,10 @@ import SearchBar from './components/SearchBar'
 import WeatherAlerts from './components/WeatherAlerts'
 import WeatherIcon from './components/WeatherIcon'
 import WeatherTrend from './components/WeatherTrend'
-import { fetchHistory, fetchWeather } from './api/weather'
+import { fetchAirQuality, fetchHistory, fetchWeather } from './api/weather'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { buildAlerts } from './utils/alerts'
-import type { City, HistoryDay, WeatherResult } from './types/weather'
+import type { AirQuality, City, HistoryDay, WeatherResult } from './types/weather'
 
 const FAVORITES_KEY = 'laoniu-weather:favorites'
 const COMPARE_KEY = 'laoniu-weather:comparison'
@@ -26,6 +27,8 @@ export default function App() {
   const [history, setHistory] = useState<HistoryDay[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
+  const [air, setAir] = useState<AirQuality | null>(null)
+  const [airError, setAirError] = useState('')
   const [compareItems, setCompareItems] = useState<WeatherResult[]>([])
   const [compareLoading, setCompareLoading] = useState(false)
   const [compareError, setCompareError] = useState('')
@@ -77,7 +80,7 @@ export default function App() {
   }
 
   const activeCityId = weather?.city.id ?? selected?.id
-  const alerts = useMemo(() => (weather ? buildAlerts(weather) : []), [weather])
+  const alerts = useMemo(() => (weather ? buildAlerts(weather, air) : []), [weather, air])
 
   useEffect(() => {
     const hasDanger = alerts.some((alert) => alert.level === 'danger')
@@ -106,6 +109,25 @@ export default function App() {
       cancelled = true
     }
   }, [selected, historyDays])
+
+  useEffect(() => {
+    if (!selected) return
+    let cancelled = false
+    setAirError('')
+    setAir(null)
+
+    fetchAirQuality(selected)
+      .then((result) => {
+        if (!cancelled) setAir(result)
+      })
+      .catch((err) => {
+        if (!cancelled) setAirError(err instanceof Error ? err.message : '空气质量数据加载失败')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selected])
 
   useEffect(() => {
     if (compareCities.length === 0) {
@@ -179,6 +201,12 @@ export default function App() {
                   compareFull={compareCities.length >= MAX_COMPARE}
                   onToggleCompare={() => toggleCompare(weather.city)}
                 />
+                {air && <AirQualityCard air={air} />}
+                {!air && airError && (
+                  <p className="animate-fade-in rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
+                    {airError}
+                  </p>
+                )}
               </div>
             )}
 
