@@ -150,17 +150,19 @@ export async function fetchHistory(city: City, days: number): Promise<HistoryDay
   const data = (await res.json()) as { daily?: DailyResponse }
   const daily = data.daily ?? {}
   const times = daily.time ?? []
+  const maxList = daily.temperature_2m_max ?? []
+  const minList = daily.temperature_2m_min ?? []
 
-  const history = times
+  const history: HistoryDay[] = times
     .map((date, index) => ({
       date,
-      maxTemperature: daily.temperature_2m_max?.[index] ?? 0,
-      minTemperature: daily.temperature_2m_min?.[index] ?? 0,
+      maxTemperature: maxList[index] ?? 0,
+      minTemperature: minList[index] ?? 0,
       precipitation: daily.precipitation_sum?.[index] ?? 0,
       maxWindSpeed: daily.wind_speed_10m_max?.[index] ?? 0,
       weatherCode: daily.weather_code?.[index] ?? 0,
     }))
-    .filter((day) => Number.isFinite(day.maxTemperature) && day.maxTemperature !== 0)
+    .filter((_, index) => maxList[index] != null && minList[index] != null)
 
   if (history.length === 0) throw new Error('暂无该城市的历史天气数据')
   return history

@@ -4,10 +4,11 @@ import FavoriteList from './components/FavoriteList'
 import SearchBar from './components/SearchBar'
 import WeatherAlerts from './components/WeatherAlerts'
 import WeatherIcon from './components/WeatherIcon'
-import { fetchWeather } from './api/weather'
+import WeatherTrend from './components/WeatherTrend'
+import { fetchHistory, fetchWeather } from './api/weather'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { buildAlerts } from './utils/alerts'
-import type { City, WeatherResult } from './types/weather'
+import type { City, HistoryDay, WeatherResult } from './types/weather'
 
 const FAVORITES_KEY = 'laoniu-weather:favorites'
 
@@ -17,6 +18,10 @@ export default function App() {
   const [weather, setWeather] = useState<WeatherResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [historyDays, setHistoryDays] = useState(7)
+  const [history, setHistory] = useState<HistoryDay[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState('')
 
   async function loadWeather(city: City) {
     setSelected(city)
@@ -57,6 +62,29 @@ export default function App() {
     const hasDanger = alerts.some((alert) => alert.level === 'danger')
     document.title = hasDanger ? '恶劣天气预警 · 老牛天气' : '老牛天气'
   }, [alerts])
+
+  useEffect(() => {
+    if (!selected) return
+    let cancelled = false
+    setHistoryLoading(true)
+    setHistoryError('')
+    setHistory([])
+
+    fetchHistory(selected, historyDays)
+      .then((days) => {
+        if (!cancelled) setHistory(days)
+      })
+      .catch((err) => {
+        if (!cancelled) setHistoryError(err instanceof Error ? err.message : '历史天气加载失败')
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selected, historyDays])
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950">
@@ -106,6 +134,18 @@ export default function App() {
               <div className="animate-fade-up flex flex-col items-center gap-4 rounded-3xl border border-dashed border-white/15 p-10 text-center">
                 <WeatherIcon kind="cloud" className="size-16 text-sky-300/70" />
                 <p className="text-sm text-slate-400">搜索并选择一个城市，开始查看天气</p>
+              </div>
+            )}
+
+            {!error && selected && (
+              <div className="mt-4">
+                <WeatherTrend
+                  days={historyDays}
+                  onDaysChange={setHistoryDays}
+                  history={history}
+                  loading={historyLoading}
+                  error={historyError}
+                />
               </div>
             )}
           </div>

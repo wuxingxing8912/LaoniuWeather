@@ -13,6 +13,8 @@
   --animate-twinkle: twinkle 2.4s ease-in-out infinite;
   --animate-glow: glow 16s ease-in-out infinite;
   --animate-shimmer: shimmer 1.8s linear infinite;
+  --animate-draw: draw 1.4s ease-out both;
+  --animate-grow: grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes fade-up {
@@ -164,6 +166,21 @@
   }
 }
 
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
 @layer base {
   html,
   body,
@@ -180,6 +197,17 @@
 .wx-motion {
   transform-box: fill-box;
   transform-origin: center;
+}
+
+/* 折线绘制动画：配合 pathLength="1" 使用 */
+.wx-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.wx-grow {
+  transform-box: fill-box;
+  transform-origin: bottom;
 }
 
 .shimmer {
