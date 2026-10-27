@@ -6,6 +6,9 @@ interface Props {
   weather: WeatherResult
   isFavorite: boolean
   onToggleFavorite: () => void
+  inCompare: boolean
+  compareFull: boolean
+  onToggleCompare: () => void
 }
 
 const DETAILS = [
@@ -14,7 +17,14 @@ const DETAILS = [
   { key: 'wind', label: '风速' },
 ] as const
 
-export default function CurrentWeather({ weather, isFavorite, onToggleFavorite }: Props) {
+export default function CurrentWeather({
+  weather,
+  isFavorite,
+  onToggleFavorite,
+  inCompare,
+  compareFull,
+  onToggleCompare,
+}: Props) {
   const { city, current } = weather
   const meta = describeWeather(current.weatherCode, current.isDay)
 
@@ -33,17 +43,31 @@ export default function CurrentWeather({ weather, isFavorite, onToggleFavorite }
             {[city.admin1, city.country].filter(Boolean).join(' · ')}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onToggleFavorite}
-          className={`rounded-full border px-3 py-1.5 text-xs transition duration-200 active:scale-95 ${
-            isFavorite
-              ? 'border-amber-300/60 bg-amber-300/10 text-amber-200'
-              : 'border-white/15 text-slate-300 hover:border-white/30 hover:text-white'
-          }`}
-        >
-          {isFavorite ? '已收藏' : '收藏城市'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleCompare}
+            disabled={compareFull && !inCompare}
+            className={`rounded-full border px-3 py-1.5 text-xs transition duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
+              inCompare
+                ? 'border-sky-300/60 bg-sky-300/10 text-sky-100'
+                : 'border-white/15 text-slate-300 hover:border-white/30 hover:text-white'
+            }`}
+          >
+            {inCompare ? '已加入对比' : compareFull ? '对比已满' : '加入对比'}
+          </button>
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            className={`rounded-full border px-3 py-1.5 text-xs transition duration-200 active:scale-95 ${
+              isFavorite
+                ? 'border-amber-300/60 bg-amber-300/10 text-amber-200'
+                : 'border-white/15 text-slate-300 hover:border-white/30 hover:text-white'
+            }`}
+          >
+            {isFavorite ? '已收藏' : '收藏城市'}
+          </button>
+        </div>
       </div>
 
       <div className="mt-8 flex items-center gap-5">

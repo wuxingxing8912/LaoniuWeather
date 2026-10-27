@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import CityCompare from './components/CityCompare'
 import CurrentWeather from './components/CurrentWeather'
 import FavoriteList from './components/FavoriteList'
 import SearchBar from './components/SearchBar'
@@ -11,9 +12,12 @@ import { buildAlerts } from './utils/alerts'
 import type { City, HistoryDay, WeatherResult } from './types/weather'
 
 const FAVORITES_KEY = 'laoniu-weather:favorites'
+const COMPARE_KEY = 'laoniu-weather:comparison'
+const MAX_COMPARE = 6
 
 export default function App() {
   const [favorites, setFavorites] = useLocalStorage<City[]>(FAVORITES_KEY, [])
+  const [compareCities, setCompareCities] = useLocalStorage<City[]>(COMPARE_KEY, [])
   const [selected, setSelected] = useState<City | null>(() => favorites[0] ?? null)
   const [weather, setWeather] = useState<WeatherResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -22,6 +26,9 @@ export default function App() {
   const [history, setHistory] = useState<HistoryDay[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
+  const [compareItems, setCompareItems] = useState<WeatherResult[]>([])
+  const [compareLoading, setCompareLoading] = useState(false)
+  const [compareError, setCompareError] = useState('')
 
   async function loadWeather(city: City) {
     setSelected(city)
@@ -55,6 +62,20 @@ export default function App() {
     setFavorites(favorites.filter((item) => item.id !== city.id))
   }
 
+  function toggleCompare(city: City) {
+    const exists = compareCities.some((item) => item.id === city.id)
+    if (exists) {
+      setCompareCities(compareCities.filter((item) => item.id !== city.id))
+      return
+    }
+    if (compareCities.length >= MAX_COMPARE) return
+    setCompareCities([...compareCities, city])
+  }
+
+  function clearCompare() {
+    setCompareCities([])
+  }
+
   const activeCityId = weather?.city.id ?? selected?.id
   const alerts = useMemo(() => (weather ? buildAlerts(weather) : []), [weather])
 
@@ -85,6 +106,34 @@ export default function App() {
       cancelled = true
     }
   }, [selected, historyDays])
+
+  useEffect(() => {
+    if (compareCities.length === 0) {
+      setCompareItems([])
+      setCompareError('')
+      setCompareLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setCompareLoading(true)
+    setCompareError('')
+
+    Promise.all(compareCities.map((city) => fetchWeather(city)))
+      .then((results) => {
+        if (!cancelled) setCompareItems(results)
+      })
+      .catch((err) => {
+        if (!cancelled) setCompareError(err instanceof Error ? err.message : '对比数据加载失败')
+      })
+      .finally(() => {
+        if (!cancelled) setCompareLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [compareCities])
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950">
@@ -126,6 +175,9 @@ export default function App() {
                   weather={weather}
                   isFavorite={favorites.some((city) => city.id === weather.city.id)}
                   onToggleFavorite={toggleFavorite}
+                  inCompare={compareCities.some((city) => city.id === weather.city.id)}
+                  compareFull={compareCities.length >= MAX_COMPARE}
+                  onToggleCompare={() => toggleCompare(weather.city)}
                 />
               </div>
             )}
@@ -148,13 +200,28 @@ export default function App() {
                 />
               </div>
             )}
+
+            <div className="mt-4">
+              <CityCompare
+                cities={compareCities}
+                items={compareItems}
+                loading={compareLoading}
+                error={compareError}
+                activeId={activeCityId}
+                onRemove={toggleCompare}
+                onSelect={loadWeather}
+                onClear={clearCompare}
+              />
+            </div>
           </div>
 
           <FavoriteList
             cities={favorites}
             activeId={activeCityId}
+            compareIds={compareCities.map((city) => city.id)}
             onSelect={loadWeather}
             onRemove={removeFavorite}
+            onToggleCompare={toggleCompare}
           />
         </main>
 
